@@ -20,6 +20,9 @@ def main():
         return 2
     if args[0] == 'list':
         fields = args[args.index('--fields') + 1].split(',')
+        if '--search' in args:
+            key, _, value = args[args.index('--search') + 1].partition(':')
+            books = [b for b in books if value in (b.get(key) or [])]
         print(json.dumps([{f: b.get(f) for f in fields if f in b} for b in books], indent=2))
         if os.environ.get('FAKE_CALIBRE_TRAILING'):
             print(os.environ['FAKE_CALIBRE_TRAILING'])

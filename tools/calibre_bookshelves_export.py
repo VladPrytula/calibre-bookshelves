@@ -222,6 +222,7 @@ def main(argv=None):
     parser.add_argument('--favourite', help="Optional Yes/No custom column, e.g. '#favourite'")
     parser.add_argument('--status', help="Optional text/enum custom column with To Read / Reading / On Hold / Finished, e.g. '#reading_status'")
     parser.add_argument('--formats', default='epub,pdf', help='Preference order; one file per book (default: epub,pdf)')
+    parser.add_argument('--search', help="Calibre search expression limiting which books are exported, e.g. 'tags:kindle' or '#device:true'")
     parser.add_argument('--prune', action='store_true', help='Delete files this tool exported earlier for books that are no longer selected')
     parser.add_argument('--dry-run', action='store_true', help='Report the plan without writing anything')
     args = parser.parse_args(argv)
@@ -245,9 +246,10 @@ def main(argv=None):
 
     cal = Calibre(find_calibredb(args.calibredb), args.library, args.username, args.password)
     fields = ['id', 'uuid', 'title', 'authors', 'formats', 'last_modified', shelves_key] + [k for k in (favourite_key, status_key) if k]
-    books = parse_list(cal.run('list', '--for-machine', '--fields', ','.join(fields)))
+    list_args = ['list', '--for-machine', '--fields', ','.join(fields)] + (['--search', args.search] if args.search else [])
+    books = parse_list(cal.run(*list_args))
     if not books:
-        raise ExportError('The library returned no books; nothing was changed.')
+        raise ExportError('The library returned no books' + (' for that search' if args.search else '') + '; nothing was changed.')
     selected, skipped = plan(books, formats, shelves_key, favourite_key, status_key, state['books'])
     pending = [e for e in selected if needs_export(e, dest)]
     keep = {e['file'] for e in selected}

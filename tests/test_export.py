@@ -149,6 +149,17 @@ class EndToEnd(unittest.TestCase):
         self.assertFalse((self.f.dest / 'Beta - Ann Author [22222222].epub').exists())
         self.assertTrue(unrelated.exists())
 
+    def test_search_limits_selection_and_previous_exports_become_stale(self):
+        self.f.set_books([book(1, U1, 'Alpha', tags=['kindle']), book(2, U2, 'Beta')])
+        self.f.run()
+        r = self.f.run('--search', 'tags:kindle')
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual([b['uuid'] for b in self.f.catalogue()['books']], [U1])
+        self.assertIn('1 previously exported files no longer selected', r.stdout)
+        r = self.f.run('--search', 'tags:nothing')
+        self.assertEqual(r.returncode, 1)
+        self.assertIn('no books for that search', r.stderr)
+
     def test_dry_run_writes_nothing(self):
         self.f.set_books([book(1, U1, 'Alpha')])
         r = self.f.run('--dry-run')

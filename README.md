@@ -51,6 +51,7 @@ python3 tools/calibre_bookshelves_export.py --library … --dest … \
 - `--favourite` is an optional Yes/No column. Unset cells leave the device's favourite flag alone.
 - `--status` is an optional text column holding `To Read`, `Reading`, `On Hold` or `Finished`. Unset cells leave the device's status alone.
 - `--formats epub,pdf` is the preference order; one file per book. Books with neither format are listed and skipped.
+- `--search` limits the export to a Calibre search expression (the same syntax as the search box in Calibre), e.g. `--search 'tags:kindle'`.
 - `--dry-run` shows what would happen. `--prune` deletes files this tool exported earlier for books that are no longer selected; without it they are only reported. Files the tool did not create are never deleted.
 - `--library` also accepts a Content server URL (`http://host:8080`, plus `--username`/`--password` when the server has authentication enabled) if you prefer not to close Calibre. In that mode the catalogue's `library_id` is derived from the URL rather than read from `metadata.db`, so keep using the same URL for the same destination folder.
 
@@ -71,9 +72,11 @@ Open the plugin menu while in the file browser (not inside a book):
 
 Every change to a collection, favourite or status is backed up under KOReader's settings folder before it is written and read back afterwards; an import that cannot verify its own write stops and tells you.
 
-## What it does not do
+## Scope
 
-No wireless transfer, no reading-position sync (use KOSync), no annotation handling, no sending from the device back to Calibre, no automatic shelf creation in Calibre. The exporter does not choose which books to send: everything with an EPUB or PDF goes. If you want a selection, give the selection a tag in Calibre and build a virtual library, or run the exporter against a Content server with that virtual library.
+A few things are intentionally outside what this project does, mostly because KOReader or other tools already cover them. The plugin does not transfer books itself, and it does not sync reading positions; KOReader's own KOSync plugin handles that. It does not read or write highlights and annotations. Information only flows from Calibre to the device: changes you make to collections on the device are not sent back, and the plugin cannot create shelves in Calibre.
+
+The exporter sends every book that has an EPUB or PDF unless you tell it otherwise. If you only want part of your library on the device, give those books a tag or a Yes/No column in Calibre and pass a search expression, for example `--search 'tags:kindle'`. Books that drop out of the search are reported as no longer selected and are removed from the device folder only when you run with `--prune`.
 
 ## Development
 
