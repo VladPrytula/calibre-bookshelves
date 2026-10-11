@@ -1,10 +1,12 @@
 # Calibre Bookshelves for KOReader
 
-Browse your Calibre shelves on the device, offline. A small exporter turns a Calibre library into a folder of EPUB/PDF files plus one catalogue file; the KOReader plugin turns that catalogue into KOReader collections, a category browser with list or cover view, and (optionally) favourite flags and reading status. How the folder reaches the device is up to you: USB, Calibre's *Send to device*, Syncthing, anything that copies files.
+This is a KOReader plugin that shows the shelves you keep in Calibre on your e-reader, without needing a network connection while you read. It comes with a small Python script that exports a Calibre library into a folder of EPUB and PDF files together with a catalogue file describing which book belongs on which shelf. Once that folder is on the device, the plugin reads the catalogue and creates matching KOReader collections, adds a shelf browser (as a plain list or with covers), and can optionally set the favourite flag and reading status from Calibre columns as well.
 
-It is deliberately narrow. Calibre stays the single owner of books and shelves. The plugin never edits reading positions, highlights or annotations, never deletes book files, and never touches collections it did not create.
+Getting the folder onto the device is left to whatever you already use: a USB cable, Calibre's *Send to device*, Syncthing, or anything else that copies files. I use Syncthing myself, but the plugin does not depend on it.
 
-Tested on Kindle Scribe and Paperwhite with KOReader 2026.07 and ZenOS 4.0.1, exporting from Calibre 9.15 on macOS both from a library folder and through an authenticated Content server. Other KOReader platforms should work (the plugin uses only KOReader's own APIs) but are not verified.
+Calibre remains the place where books and shelves are managed. The plugin only maintains the collections it created itself and leaves your other collections alone. It does not modify reading positions, highlights or annotations, and it never deletes book files.
+
+I have been using this on a Kindle Scribe and a Paperwhite running KOReader 2026.07 with ZenOS 4.0.1, exporting from Calibre 9.15 on macOS, both directly from the library folder and through a Content server with authentication. The plugin only uses KOReader's own APIs, so it should work on other devices KOReader supports, but I have not tried them. Reports are welcome.
 
 ## How it fits together
 
