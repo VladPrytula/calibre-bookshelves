@@ -4,7 +4,7 @@ Browse your Calibre shelves on the device, offline. A small exporter turns a Cal
 
 It is deliberately narrow. Calibre stays the single owner of books and shelves. The plugin never edits reading positions, highlights or annotations, never deletes book files, and never touches collections it did not create.
 
-Tested on Kindle Scribe and Paperwhite with KOReader 2026.07 and ZenOS 4.0.1, exporting from Calibre 9.x on macOS. Other KOReader platforms should work (the plugin uses only KOReader's own APIs) but are not verified.
+Tested on Kindle Scribe and Paperwhite with KOReader 2026.07 and ZenOS 4.0.1, exporting from Calibre 9.15 on macOS both from a library folder and through an authenticated Content server. Other KOReader platforms should work (the plugin uses only KOReader's own APIs) but are not verified.
 
 ## How it fits together
 
@@ -50,7 +50,7 @@ python3 tools/calibre_bookshelves_export.py --library … --dest … \
 - `--status` is an optional text column holding `To Read`, `Reading`, `On Hold` or `Finished`. Unset cells leave the device's status alone.
 - `--formats epub,pdf` is the preference order; one file per book. Books with neither format are listed and skipped.
 - `--dry-run` shows what would happen. `--prune` deletes files this tool exported earlier for books that are no longer selected; without it they are only reported. Files the tool did not create are never deleted.
-- `--library` also accepts a Content server URL (`http://host:8080`, plus `--username`/`--password`) if you prefer not to close Calibre.
+- `--library` also accepts a Content server URL (`http://host:8080`, plus `--username`/`--password` when the server has authentication enabled) if you prefer not to close Calibre. In that mode the catalogue's `library_id` is derived from the URL rather than read from `metadata.db`, so keep using the same URL for the same destination folder.
 
 Close the Calibre GUI before exporting from a library folder; `calibredb` refuses to open a library the GUI has open, and the exporter reports that refusal verbatim.
 

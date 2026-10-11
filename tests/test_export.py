@@ -42,10 +42,12 @@ class Fixture:
     def set_books(self, books):
         self.fixture.write_text(json.dumps(books))
 
-    def run(self, *extra, fail=None):
+    def run(self, *extra, fail=None, trailing=None):
         env = {**os.environ, 'FAKE_CALIBRE_FIXTURE': str(self.fixture)}
         if fail:
             env['FAKE_CALIBRE_FAIL'] = fail
+        if trailing:
+            env['FAKE_CALIBRE_TRAILING'] = trailing
         return subprocess.run([sys.executable, str(TOOL), '--library', str(self.library), '--dest', str(self.dest),
                                '--calibredb', str(FAKE), *extra], capture_output=True, text=True, env=env)
 
@@ -70,6 +72,14 @@ class PureHelpers(unittest.TestCase):
         with self.assertRaises(exporter.ExportError):
             exporter.build_catalogue(LIB_ID, [
                 {'uuid': U1, 'shelves': ['Maths']}, {'uuid': U2, 'shelves': ['maths']}])
+
+    def test_formats_accept_paths_and_content_server_names(self):
+        books = [{'id': 1, 'uuid': U1, 'title': 'A', 'formats': ['/lib/A.EPUB']},
+                 {'id': 2, 'uuid': U2, 'title': 'B', 'formats': ['PDF', 'MOBI']},
+                 {'id': 3, 'uuid': U3, 'title': 'C', 'formats': ['MOBI']}]
+        selected, skipped = exporter.plan(books, ['epub', 'pdf'], 'tags', None, None, {})
+        self.assertEqual([(e['title'], e['format']) for e in selected], [('A', 'epub'), ('B', 'pdf')])
+        self.assertEqual(skipped, ['C'])
 
     def test_field_keys(self):
         self.assertEqual(exporter.field_key('tags'), 'tags')
@@ -172,6 +182,19 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn('main calibre program is running', r.stderr)
         self.assertEqual(before, sorted(p.name for p in self.f.dest.iterdir()))
+
+    def test_trailing_calibredb_diagnostics_are_ignored(self):
+        # calibredb appends e.g. "Using proxies: {...}" to stdout when it talks to a Content server.
+        self.f.set_books([book(1, U1, 'Alpha')])
+        r = self.f.run(trailing="Using proxies: {'no': '127.0.0.1,localhost,::1'}")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(len(self.f.catalogue()['books']), 1)
+
+    def test_malformed_list_output_is_an_error(self):
+        self.assertEqual(exporter.parse_list('  [{"id": 1}]  trailing'), [{'id': 1}])
+        for bad in ('no json here', '[1, 2', '{"a": 1}'):
+            with self.assertRaises(exporter.ExportError):
+                exporter.parse_list(bad)
 
     def test_different_library_refused(self):
         self.f.set_books([book(1, U1, 'Alpha')])

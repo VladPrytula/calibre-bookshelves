@@ -20,7 +20,9 @@ def main():
         return 2
     if args[0] == 'list':
         fields = args[args.index('--fields') + 1].split(',')
-        print(json.dumps([{f: b.get(f) for f in fields if f in b} for b in books]))
+        print(json.dumps([{f: b.get(f) for f in fields if f in b} for b in books], indent=2))
+        if os.environ.get('FAKE_CALIBRE_TRAILING'):
+            print(os.environ['FAKE_CALIBRE_TRAILING'])
         return 0
     if args[0] == 'export':
         ids = {int(i) for i in args[1].split(',')}

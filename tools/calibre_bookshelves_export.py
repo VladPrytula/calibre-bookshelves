@@ -111,7 +111,8 @@ def plan(books, formats, shelves_key, favourite_key, status_key, state):
         title = book.get('title') or book['uuid']
         if not UUID_RE.match(book.get('uuid') or ''):
             raise ExportError(f'Book without a valid UUID: {title}')
-        available = {Path(p).suffix.lower().lstrip('.') for p in book.get('formats') or []}
+        # Local libraries list format file paths; a Content server lists bare format names.
+        available = {(Path(p).suffix.lstrip('.') if '.' in p else p).lower() for p in book.get('formats') or []}
         fmt = next((f for f in formats if f in available), None)
         if not fmt:
             skipped.append(title)
@@ -139,6 +140,21 @@ def plan(books, formats, shelves_key, favourite_key, status_key, state):
                          'shelves': shelves, 'favourite': favourite, 'status': status,
                          'last_modified': book.get('last_modified'), 'previous': prev})
     return selected, skipped
+
+
+def parse_list(output):
+    """`calibredb list --for-machine` may append diagnostics such as 'Using proxies: ...' to stdout
+    when it talks to a Content server; decode the leading JSON array and ignore the rest."""
+    start = output.find('[')
+    if start < 0:
+        raise ExportError('calibredb list returned no JSON:\n' + output.strip()[:500])
+    try:
+        value, _ = json.JSONDecoder().raw_decode(output, start)
+    except json.JSONDecodeError as exc:
+        raise ExportError(f'calibredb list returned malformed JSON ({exc}).')
+    if not isinstance(value, list):
+        raise ExportError('calibredb list did not return a book array.')
+    return value
 
 
 def needs_export(entry, dest):
@@ -229,7 +245,7 @@ def main(argv=None):
 
     cal = Calibre(find_calibredb(args.calibredb), args.library, args.username, args.password)
     fields = ['id', 'uuid', 'title', 'authors', 'formats', 'last_modified', shelves_key] + [k for k in (favourite_key, status_key) if k]
-    books = json.loads(cal.run('list', '--for-machine', '--fields', ','.join(fields)))
+    books = parse_list(cal.run('list', '--for-machine', '--fields', ','.join(fields)))
     if not books:
         raise ExportError('The library returned no books; nothing was changed.')
     selected, skipped = plan(books, formats, shelves_key, favourite_key, status_key, state['books'])
