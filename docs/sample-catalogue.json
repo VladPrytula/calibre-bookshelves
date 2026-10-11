@@ -1,0 +1,48 @@
+{
+  "books": [
+    {
+      "authors": "James S. A. Corey",
+      "book_uuid": "1c65c4e1-685a-44f2-bce6-9749def5a8a0",
+      "bytes": 20,
+      "favourite": "unmanaged",
+      "file": "Leviathan Wakes - James S. A. Corey [1c65c4e1].epub",
+      "format": "epub",
+      "shelves": [
+        "Fiction"
+      ],
+      "status": "unmanaged",
+      "title": "Leviathan Wakes",
+      "uuid": "1c65c4e1-685a-44f2-bce6-9749def5a8a0"
+    },
+    {
+      "authors": "J. J. Duistermaat & J. A. C. Kolk",
+      "book_uuid": "8d2a4b6c-0e1f-4a2b-9c3d-4e5f6a7b8c9d",
+      "bytes": 43,
+      "favourite": "unmanaged",
+      "file": "Distributions Theory and Applications - J. J. Duistermaat & J. A. C. Kolk [8d2a4b6c].pdf",
+      "format": "pdf",
+      "shelves": [
+        "Mathematics",
+        "Mathematics / Analysis & PDE"
+      ],
+      "status": "unmanaged",
+      "title": "Distributions: Theory and Applications",
+      "uuid": "8d2a4b6c-0e1f-4a2b-9c3d-4e5f6a7b8c9d"
+    },
+    {
+      "authors": "Anonymous",
+      "book_uuid": "f0e1d2c3-b4a5-4697-8879-6a5b4c3d2e1f",
+      "bytes": 20,
+      "favourite": "unmanaged",
+      "file": "Unshelved Essay - Anonymous [f0e1d2c3].epub",
+      "format": "epub",
+      "shelves": [],
+      "status": "unmanaged",
+      "title": "Unshelved Essay",
+      "uuid": "f0e1d2c3-b4a5-4697-8879-6a5b4c3d2e1f"
+    }
+  ],
+  "library_id": "7b1f3c2e-5a6d-4e8f-9a0b-1c2d3e4f5a6b",
+  "revision": "b6f9368d1e70e24a9dbe327166940ef08ada51b6368b2444d3f10700c2a40c50",
+  "schema": 1
+}
