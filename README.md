@@ -66,7 +66,7 @@ If you sync with Syncthing, add `.calibre-bookshelves-tmp-*` to the folder's ign
 Open the plugin menu while in the file browser (not inside a book):
 
 - **Import now** reconciles collections with the catalogue. With **Automatic import while in Library** on (default), this also happens about once a minute whenever you are in the file browser and the catalogue has changed. A book is only added once a file of the exact size in the catalogue exists, so partial transfers never appear.
-- **Browse categories** opens the shelf browser: a tile or compact list of shelves, and inside each shelf a list or cover grid of books, with EPUB/PDF choice when both exist.
+- **Browse categories** opens the shelf browser: a tile or compact list of shelves, and inside each shelf a list or cover grid of books, with EPUB/PDF choice when both exist. Tiles show four rows of two per page, with Previous/Next when a subject has more sub-shelves than fit; Back returns to the same page.
 - **Status / last result** shows what the last import did or why it stopped.
 - **Reapply explicit Calibre favourites/status** forces those flags again even if the catalogue did not change (for example after you changed them by hand on the device).
 

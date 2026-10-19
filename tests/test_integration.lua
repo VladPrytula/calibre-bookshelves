@@ -233,4 +233,29 @@ end)
 check('active reader prevents category browser',function()
  package.loaded['apps/reader/readerui'].instance={};local ok=pcall(function()p:browseCategories()end);assert(not ok and not p.category_menu);package.loaded['apps/reader/readerui'].instance=nil
 end)
-print('Integration tests passed: 24 (actual KOReader collections; controlled UI/sidecar/ZenOS adapters).')
+check('subject tiles page with fixed rows and keep their page across Back',function()
+ local saved=gs.calibre_categories_layout;gs.calibre_categories_layout='tiles'
+ p:browseCategories();local browser=p.category_menu
+ assert(#browser.widget.buttons[#browser.widget.buttons-1]==1) -- one subject: no page row
+ local items={categories=true,{text='All in Mathematics',sub_item_table={}}}
+ for i=1,11 do items[#items+1]={text='Child '..i,tile=true,mandatory='0 books',sub_item_table={categories=true}} end
+ items[#items+1]={text='General Mathematics',sub_item_table={}}
+ browser.item_table=items;browser.page=1;browser:render()
+ local rows=browser.widget.buttons -- View, All in, four tile rows, General, pages, Close
+ assert(#rows==9 and rows[2][1].text=='All in Mathematics' and #rows[3]==2 and rows[3][1].text=='Child 1 · 0 books')
+ assert(rows[6][2].text=='Child 8 · 0 books' and rows[7][1].text=='General Mathematics' and rows[9][1].text=='Close')
+ assert(rows[8][2].text=='1 / 2' and rows[8][1].enabled==false and rows[8][3].enabled==true)
+ rows[8][3].callback();rows=browser.widget.buttons
+ assert(browser.page==2 and rows[3][1].text=='Child 9 · 0 books' and #rows[3]==2 and #rows[4]==1 and rows[4][1].text=='Child 11 · 0 books')
+ assert(rows[5][1].text=='General Mathematics' and rows[6][2].text=='2 / 2' and rows[6][3].enabled==false)
+ rows[4][1].callback();assert(browser.title=='Child 11' and browser.page==1 and #browser.widget.buttons==2)
+ browser:onClose();assert(browser.page==2 and browser.widget.buttons[6][2].text=='2 / 2')
+ browser:onCloseAllMenus();gs.calibre_categories_layout=saved
+end)
+check('newer navigation keeps saved shelves browsable with an explanation',function()
+ cat.navigation.version=3;publish('9')
+ p:browseCategories();local browser=p.category_menu
+ assert(browser.item_table[2].text:find('newer Calibre Bookshelves',1,true) and find(browser.item_table,'Saved shelves'))
+ browser:onCloseAllMenus();cat.navigation.version=1;publish('b')
+end)
+print('Integration tests passed: 26 (actual KOReader collections; controlled UI/sidecar/ZenOS adapters).')

@@ -28,7 +28,19 @@ test('missing and partial files remain explicit',function()local m=C.build(cat,{
 test('one ready rendition makes a book available',function()local c=clone(cat);c.books[#c.books+1]=book(6,{'Mathematics / Analysis'},'pdf',1);local m=C.build(c,{['Book 6.pdf']=10});assert(m.all[1].ready and not m.all[1].renditions[1].ready and m.all[1].renditions[2].ready)end)
 test('old catalogue has a flat saved-shelf fallback',function()local c=clone(cat);c.navigation=nil;local m=build(c);assert(m.flat and #m.roots==0 and #m.legacy_names==4 and #m.unassigned==1)end)
 test('empty catalogue retains the category tree',function()local c=clone(cat);c.books={};local m=build(c);assert(#m.all==0 and #m.roots==2)end)
-test('unsupported navigation version fails only browsing',function()local c=clone(cat);c.navigation.version=2;assert(Core.validate(c));raises(function()build(c)end,'Unsupported navigation')end)
+local function wide(version,children)
+ local c=clone(cat);c.navigation={version=version,nodes={{id='math',name='Mathematics',path='Mathematics'}}}
+ for i=1,children do c.navigation.nodes[#c.navigation.nodes+1]={id='c'..i,name='Child '..i,path='Mathematics / Child '..i,parent='math'} end
+ for i=2,6 do c.navigation.nodes[#c.navigation.nodes+1]={id='r'..i,name='Root '..i,path='Root '..i} end
+ c.books={book(1,{'Mathematics / Child 1'})};return c
+end
+test('version 1 keeps its original budget of eight sub-shelves',function()assert(#build(wide(1,8)).nodes.math.children==8);raises(function()build(wide(1,9))end,'Unsupported navigation')end)
+test('version 2 accepts sixteen sub-shelves and six subjects',function()local m=build(wide(2,16));assert(#m.roots==6 and #m.nodes.math.children==16 and #m.nodes.c1.books==1)end)
+test('version 2 refuses a seventeenth sub-shelf or a seventh subject',function()
+ raises(function()build(wide(2,17))end,'Unsupported navigation')
+ local c=wide(2,15);c.navigation.nodes[#c.navigation.nodes+1]={id='r7',name='Root 7',path='Root 7'};raises(function()build(c)end,'budget')end)
+test('a newer navigation version falls back to saved shelf names',function()local c=clone(cat);c.navigation.version=3;assert(Core.validate(c));local m=build(c);assert(m.flat and m.newer==3 and #m.roots==0 and #m.legacy_names==4)end)
+test('malformed navigation versions still fail browsing',function()for _,v in ipairs({0,'2',2.5})do local c=clone(cat);c.navigation.version=v;raises(function()build(c)end,'Unsupported navigation')end end)
 test('cyclic and unknown parents rejected',function()local c=clone(cat);c.navigation.nodes[1].parent='analysis';raises(function()build(c)end,'hierarchy');c=clone(cat);c.navigation.nodes[2].parent='missing';raises(function()build(c)end,'hierarchy')end)
 test('duplicate IDs paths and reserved names rejected',function()local c=clone(cat);c.navigation.nodes[2].id='math';raises(function()build(c)end,'definition');c=clone(cat);c.navigation.nodes[4].path='Mathematics';raises(function()build(c)end,'definition');c=clone(cat);c.navigation.nodes[4].name='favorites';raises(function()build(c)end,'definition')end)
 test('arbitrary display paths do not define the hierarchy',function()local c=clone(cat);c.navigation.nodes[2].path='Mathematics / Forged';raises(function()build(c)end,'hierarchy')end)

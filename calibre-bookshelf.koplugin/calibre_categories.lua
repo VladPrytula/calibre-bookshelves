@@ -18,6 +18,9 @@ local function add(list, book)
     if not list.seen[book.id] then list.seen[book.id]=true; list[#list+1]=book end
 end
 local function list() return {seen={}} end
+-- Navigation versions differ only in their budget. Version 1 is the original
+-- public contract; version 2 allows sixteen sub-shelves.
+local LIMITS={[1]={nodes=14,roots=6,children=8},[2]={nodes=22,roots=6,children=16}}
 local function shelf_key(shelves)
     local out={}; for _,s in ipairs(shelves) do out[#out+1]=s end
     table.sort(out); return table.concat(out,"\0")
@@ -33,9 +36,14 @@ function M.build(cat, available)
     Core.validate(cat)
     available=available or {}
     local model={roots={},nodes={},by_path={},all=list(),unassigned=list(),legacy=list(),legacy_shelves={},flat=cat.navigation==nil}
+    local nav=cat.navigation
+    if not model.flat and type(nav)=="table" and type(nav.version)=="number" and nav.version%1==0 and nav.version>2 then
+        -- A newer exporter: keep the saved shelf names browsable instead of guessing.
+        model.flat=true; model.newer=nav.version
+    end
     if not model.flat then
-        local nav=cat.navigation
-        if type(nav)~="table" or nav.version~=1 or not array(nav.nodes,14) or #nav.nodes==0 then fail("Unsupported navigation metadata.") end
+        local limits=type(nav)=="table" and LIMITS[nav.version]
+        if not limits or not array(nav.nodes,limits.nodes) or #nav.nodes==0 then fail("Unsupported navigation metadata.") end
         local paths,roots,children={},0,0
         for _,n in ipairs(nav.nodes) do
             if type(n)~="table" or not text(n.id,80) or not n.id:match("^[a-z0-9][a-z0-9%-]*$")
@@ -58,7 +66,7 @@ function M.build(cat, available)
                 model.roots[#model.roots+1]=node; roots=roots+1
             end
         end
-        if roots>6 or children>8 then fail("Category budget exceeded.") end
+        if roots>limits.roots or children>limits.children then fail("Category budget exceeded.") end
     end
     local by_id={}
     for _,r in ipairs(cat.books) do

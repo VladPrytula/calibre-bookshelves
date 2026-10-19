@@ -41,7 +41,8 @@ function M.items(model, open)
     local items={group("All books",model.all)}
     items.categories=true
     if model.flat then
-        items[#items+1]={text="Flat catalogue: publish updated categories from the Mac.",dim=true,select_enabled=false}
+        items[#items+1]={text=model.newer and "These categories need a newer Calibre Bookshelves; saved shelves are listed below."
+            or "Flat catalogue: publish updated categories from the Mac.",dim=true,select_enabled=false}
     else
         for _,n in ipairs(model.roots) do
             local item=group(n.name,n.books)
@@ -66,6 +67,9 @@ function M.items(model, open)
 end
 
 local labels={tiles="Subject tiles",compact="Compact list"}
+-- Tile rows per page. Rows differ in height, so page explicitly instead of
+-- relying on ButtonDialog's equal-row scrolling.
+M.TILE_ROWS=4
 local setting="calibre_categories_layout"
 local book_labels={list="List",covers="Covers"}
 local book_setting="calibre_categories_book_layout"
@@ -155,25 +159,35 @@ function M.show(model,open,closed,cover)
                 turn=function(first)owner.first=first;owner:render()end,
             }
         elseif self.layout=="tiles" and self.item_table.categories then
-            local rows={{view}}
-            local pending
-            local function flush()
-                if pending then rows[#rows+1]=pending;pending=nil end
-            end
+            -- Rows before the first tile and after it stay on every page; only tiles page.
+            local head,tiles,tail={},{},{}
             for _,item in ipairs(self.item_table) do
+                if item.tile then tiles[#tiles+1]=item elseif #tiles==0 then head[#head+1]=item else tail[#tail+1]=item end
+            end
+            local per=2*M.TILE_ROWS
+            local pages=math.max(1,math.ceil(#tiles/per))
+            self.page=math.min(math.max(1,self.page or 1),pages)
+            local function button(item)
                 local entry=item
-                local button={text=item.text..(item.mandatory and " · "..item.mandatory or ""),
+                local b={text=item.text..(item.mandatory and " · "..item.mandatory or ""),
                     enabled=item.select_enabled~=false,font_size=20,
                     callback=function()owner:onMenuSelect(entry)end}
-                if item.tile then
-                    button.height=math.floor(math.min(Screen:getWidth(),Screen:getHeight())*0.12)
-                    pending=pending or {};pending[#pending+1]=button
-                    if #pending==2 then flush() end
-                else
-                    flush();button.font_bold=false;rows[#rows+1]={button}
-                end
+                if item.tile then b.height=math.floor(math.min(Screen:getWidth(),Screen:getHeight())*0.12) else b.font_bold=false end
+                return b
             end
-            flush()
+            local rows={{view}}
+            for _,item in ipairs(head) do rows[#rows+1]={button(item)} end
+            local first=(self.page-1)*per
+            for i=first+1,math.min(#tiles,first+per),2 do
+                rows[#rows+1]={button(tiles[i]),tiles[i+1] and button(tiles[i+1]) or nil}
+            end
+            for _,item in ipairs(tail) do rows[#rows+1]={button(item)} end
+            if pages>1 then
+                local function turn(delta)return function()owner.page=owner.page+delta;owner:render()end end
+                rows[#rows+1]={{text="‹ Previous",enabled=self.page>1,callback=turn(-1)},
+                    {text=self.page.." / "..pages,enabled=false},
+                    {text="Next ›",enabled=self.page<pages,callback=turn(1)}}
+            end
             rows[#rows+1]={{text=#self.stack>0 and "Back" or "Close",callback=function()owner:onClose()end}}
             local dialog=ButtonDialog:new{title=self.title,buttons=rows,width=math.floor(Screen:getWidth()*0.94),
                 use_info_style=false,is_category_grid=true}

@@ -38,7 +38,16 @@ Shelf names may contain ` / `; in flat mode it is just part of the name.
 ]}
 ```
 
-`version` must be `1`; at most 14 nodes, two levels. A book's `shelves` entries are matched to `path`. Books whose shelves match no node are listed under *Unassigned*; shelves that match no node are listed as legacy shelves. The reference exporter in this repository does not emit `navigation`; it is produced by a separate tool with a bounded taxonomy. If you emit it yourself, the constraints above are enforced by the plugin.
+Two levels: a node either has no `parent` (a subject) or names a subject as its `parent`, and a child's `path` must be `"<parent name> / <name>"`. `version` sets the budget:
+
+| `version` | Nodes | Subjects | Sub-shelves | Read by |
+|---|---|---|---|---|
+| `1` | ≤ 14 | ≤ 6 | ≤ 8 | plugin 1.2 and later |
+| `2` | ≤ 22 | ≤ 6 | ≤ 16 | plugin 1.5 and later |
+
+Write the lowest version that fits your shelves if older plugins must keep browsing; plugins before 1.5 refuse version 2 in *Browse categories* (collection import is unaffected). From 1.5 on, an integer `version` above 2 is not an error: the browser lists the saved shelf names and says that a newer plugin is needed. A malformed `version` (not a positive integer) is still refused.
+
+A book's `shelves` entries are matched to `path`. Books whose shelves match no node are listed under *Unassigned*; shelves that match no node are listed as legacy shelves. The reference exporter in this repository does not emit `navigation`; it is produced by a separate tool with a bounded taxonomy. If you emit it yourself, the constraints above are enforced by the plugin.
 
 ## What the plugin does with it
 
